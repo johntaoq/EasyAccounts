@@ -7,16 +7,14 @@ services:
   db:   
     restart: always
     container_name: easy_accounts_db
-    image: mysql:8.0.31
-    ports:
-      - "10668:3306"
+    image: 775495797/easyaccounts-mysql:1.0.0
     environment:
       TZ: Asia/Shanghai
       MYSQL_ROOT_PASSWORD: easy_accounts                #数据库root密码，自行修改，修改完需要修改Server中的数据库密码
       MYSQL_DATABASE: yd_jz                             #数据库名称，请勿修改
     volumes:
       - ./Database/data:/var/lib/mysql
-      - ./Database/init:/docker-entrypoint-initdb.d
+      # - ./Database/init:/docker-entrypoint-initdb.d   #如若需要恢复数据库，请将初始化脚本放置在Database/init目录下，并解开此行注释
     command:
       --default-authentication-plugin=mysql_native_password
       --character-set-server=utf8mb4
@@ -29,7 +27,7 @@ services:
   nginx:
     restart: always
     container_name: easy_accounts_nginx
-    image: 775495797/easyaccounts-nginx:latest
+    image: 775495797/easyaccounts-nginx:4.0.0
     ports:
       - "10669:80"
     volumes:
@@ -44,7 +42,7 @@ services:
   server:
     restart: always
     container_name: easy_accounts_server
-    image: 775495797/easyaccounts-server:latest
+    image: 775495797/easyaccounts-server:2.5.1
     environment:
       #-------------------以下为服务端数据库环境变量，如果不需要外部部署数据库，请勿修改-------------------
       #- MYSQL_HOST=                            # 解开注释则需要填写数据库地址，否则默认为db
@@ -61,25 +59,20 @@ services:
       - ./Resource/sql:/Ledger/backup                        #数据库备份文件目录
       - ./Resource/excel/month:/Ledger/excel/month           #excel 生成月度账单文件目录
       - ./Resource/excel/screen:/Ledger/excel/screen         #excel 生成筛选账单文件目录
-      - ./Resource/excel/month:/Ledger/excel/analysis        #excel 生成筛选账单文件目录
       - ./Resource/images:/Ledger/images                     #图片上传文件目录
       - ./Server/logs:/Ledger/logs                           #日志文件目录
       - ./Server/auth:/Ledger/auth                           #登录认证文件目录,需要映射，否则重启后会丢失用户名密码 
                                                              #重置用户名密码请删除auth文件夹下的secret.key文件
       #- ./YD_JZ-SNAPSHOT.jar:/Ledger/app/YD_JZ-SNAPSHOT.jar #服务端jar包，如若需要自行修改，请将jar包放置在Server/app目录下，并修改此行
-    ports:
-      - 10670:8081 #左侧映射出去的端口号为服务端口号 默认10670
     depends_on:
       - db
     networks:
       - easy_accounts_net
   
   webhook:
-    image: 775495797/easyaccounts-webhook:latest
+    image: 775495797/easyaccounts-webhook:1.0.0
     container_name: easy_accounts_webhook
     restart: always
-    ports:
-      - "10671:8083"
     volumes:
       - ./WebHook:/app/
       #- ./WebHook/webhook.py:/app/webhook.py            #如果要自行处理文件，则映射该文件
@@ -103,7 +96,7 @@ services:
   # AI智能助手服务（可选）
   # 如果不想使用AI功能，可以删除或注释掉整个ai服务块
   ai:
-    image: 775495797/easyaccounts-ai:latest
+    image: 775495797/easyaccounts-ai:1.1.0
     container_name: easy_accounts_ai
     restart: always
     environment:
