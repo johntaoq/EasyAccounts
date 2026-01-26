@@ -27,7 +27,7 @@ services:
   nginx:
     restart: always
     container_name: easy_accounts_nginx
-    image: 775495797/easyaccounts-nginx:4.0.0
+    image: 775495797/easyaccounts-nginx:4.0.1
     ports:
       - "10669:80"
     volumes:
@@ -42,7 +42,7 @@ services:
   server:
     restart: always
     container_name: easy_accounts_server
-    image: 775495797/easyaccounts-server:2.5.1
+    image: 775495797/easyaccounts-server:2.6.1
     environment:
       #-------------------以下为服务端数据库环境变量，如果不需要外部部署数据库，请勿修改-------------------
       #- MYSQL_HOST=                            # 解开注释则需要填写数据库地址，否则默认为db
