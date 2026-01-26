@@ -75,9 +75,10 @@ services:
     container_name: easy_accounts_webhook
     restart: always
     volumes:
-      - ./WebHook:/app/
-      #- ./WebHook/webhook.py:/app/webhook.py            #如果要自行处理文件，则映射该文件
-      #- ./WebHook/webhook-email.py:/app/webhook.py     #如需发送邮件服务，请解开此行注释，并填写下方的环境变量
+      # 以下映射需先创建对应文件/文件夹后再解开注释，否则会报错
+      #- ./WebHook:/app/                                  # 自定义 webhook 脚本目录
+      #- ./WebHook/webhook.py:/app/webhook.py            # 如果要自行处理文件，则映射该文件
+      #- ./WebHook/webhook-email.py:/app/webhook.py      # 如需发送邮件服务，请解开此行注释，并填写下方的环境变量
     environment:
       - TZ=Asia/Shanghai
       - LOG_FILE=/app/hook.log
@@ -111,13 +112,12 @@ services:
       - MCP_TRANSPORT_MODE=sse                            # MCP传输模式: sse 或 streamable-http
 
     volumes:
-      # 数据库持久化
+      # 数据持久化（必须映射，否则重启后数据丢失）
       - ./AI/database:/app/koalaq_hub_python/resource/database
-      # 日志文件映射
       - ./AI/logs:/app/logs
-      # 自定义AI角色和指令（可选）
-      - ./AI/小易.role:/app/koalaq_hub_python/resource/role/小易.role
-      - ./AI/task.prompt:/app/koalaq_hub_python/resource/prompts/layers/task/easy_accounts_instructions.prompt
+      # 自定义AI角色和指令（可选，需先创建对应文件后再解开注释，否则会报错）
+      #- ./AI/小易.role:/app/koalaq_hub_python/resource/role/小易.role
+      #- ./AI/task.prompt:/app/koalaq_hub_python/resource/prompts/layers/task/easy_accounts_instructions.prompt
     
     depends_on:
       - server
