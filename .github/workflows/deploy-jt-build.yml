@@ -36,6 +36,7 @@ jobs:
             set -euo pipefail
 
             APP_DIR="$HOME/services/easyaccounts/prod"
+            PROJECT_NAME="easyaccounts-prod"
             REPO_URL="https://github.com/${{ github.repository }}.git"
             BRANCH="${{ github.ref_name }}"
 
@@ -50,8 +51,12 @@ jobs:
             git fetch --prune origin
             git checkout -B "$BRANCH" "origin/$BRANCH"
 
-            docker compose pull
-            docker compose up -d
-            docker compose ps
+            docker compose -p "$PROJECT_NAME" pull
+            if ! docker compose -p "$PROJECT_NAME" up -d --remove-orphans; then
+              # Clean up a stale project name created by earlier workflow runs.
+              docker compose -p prod down --remove-orphans || true
+              docker compose -p "$PROJECT_NAME" up -d --remove-orphans
+            fi
+            docker compose -p "$PROJECT_NAME" ps
 
             docker image prune -f
