@@ -1,0 +1,13 @@
+services:
+  db:
+    container_name: easy_accounts_db_local
+  server:
+    container_name: easy_accounts_server_local
+  webhook:
+    container_name: easy_accounts_webhook_local
+  ai:
+    container_name: easy_accounts_ai_local
+  nginx:
+    container_name: easy_accounts_nginx_local
+    ports:
+      - "11669:80"
