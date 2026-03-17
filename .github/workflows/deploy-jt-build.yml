@@ -1,0 +1,57 @@
+name: Deploy to jt-build
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: easyaccounts-prod-deploy
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate docker compose file
+        run: docker compose -f docker-compose.yml config > /dev/null
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.JT_BUILD_HOST }}
+          username: ${{ secrets.JT_BUILD_USER }}
+          key: ${{ secrets.JT_BUILD_SSH_KEY }}
+          port: 22
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            APP_DIR="$HOME/services/easyaccounts/prod"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            BRANCH="${{ github.ref_name }}"
+
+            mkdir -p "$(dirname "$APP_DIR")"
+
+            if [ ! -d "$APP_DIR/.git" ]; then
+              git clone "$REPO_URL" "$APP_DIR"
+            fi
+
+            cd "$APP_DIR"
+            git remote set-url origin "$REPO_URL"
+            git fetch --prune origin
+            git checkout -B "$BRANCH" "origin/$BRANCH"
+
+            docker compose pull
+            docker compose up -d
+            docker compose ps
+
+            docker image prune -f
