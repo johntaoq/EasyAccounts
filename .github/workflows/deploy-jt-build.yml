@@ -20,6 +20,17 @@ jobs:
       - name: Validate docker compose file
         run: docker compose -f docker-compose.yml config > /dev/null
 
+      - name: Validate deploy secrets
+        env:
+          JT_BUILD_HOST: ${{ secrets.JT_BUILD_HOST }}
+          JT_BUILD_USER: ${{ secrets.JT_BUILD_USER }}
+          JT_BUILD_SSH_KEY: ${{ secrets.JT_BUILD_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          [ -n "${JT_BUILD_HOST}" ] || { echo "Missing secret: JT_BUILD_HOST"; exit 1; }
+          [ -n "${JT_BUILD_USER}" ] || { echo "Missing secret: JT_BUILD_USER"; exit 1; }
+          [ -n "${JT_BUILD_SSH_KEY}" ] || { echo "Missing secret: JT_BUILD_SSH_KEY"; exit 1; }
+
   deploy:
     needs: verify
     runs-on: ubuntu-latest
@@ -52,11 +63,9 @@ jobs:
             git checkout -B "$BRANCH" "origin/$BRANCH"
 
             docker compose -p "$PROJECT_NAME" pull
-            if ! docker compose -p "$PROJECT_NAME" up -d --remove-orphans; then
-              # Clean up a stale project name created by earlier workflow runs.
-              docker compose -p prod down --remove-orphans || true
-              docker compose -p "$PROJECT_NAME" up -d --remove-orphans
-            fi
+            # Clean up a stale project name created by earlier workflow runs.
+            docker compose -p prod down --remove-orphans || true
+            docker compose -p "$PROJECT_NAME" up -d --remove-orphans
             docker compose -p "$PROJECT_NAME" ps
 
             docker image prune -f
